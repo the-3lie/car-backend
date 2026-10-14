@@ -32,6 +32,7 @@ r.post('/verifier', exiger(TOUS), async (req, res) => {
   const { identifiant, recu, nomSaisi, car } = req.body || {};
   if (!identifiant && !recu) return res.status(400).json({ error: 'Saisis un identifiant, une carte ou un reçu' });
   const rep = await verifier({ identifiant, recu });
+  if (rep.resultat === 'PLUSIEURS') return res.json(rep);
   await prisma.controle.create({
     data: {
       uuid: randomUUID(),

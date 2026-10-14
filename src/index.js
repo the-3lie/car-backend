@@ -12,8 +12,10 @@ if (!process.env.JWT_SECRET) {
 }
 
 const app = express();
-const origines = (process.env.FRONTEND_URL || '').split(',').map((s) => s.trim()).filter(Boolean);
-app.use(cors({ origin: origines.length ? origines : true }));
+const origines = (process.env.FRONTEND_URL || '').split(',').map((s) => s.trim().replace(/\/+$/, '')).filter(Boolean);
+app.use(cors({
+  origin: (origin, cb) => cb(null, !origin || origines.length === 0 || origines.includes(origin)),
+}));
 app.use(express.json({ limit: '5mb' }));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));

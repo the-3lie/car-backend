@@ -17,6 +17,7 @@ const ALIAS = {
   nom: ['nom'],
   prenom: ['prenom', 'prenoms'],
   filiere: ['filiere', 'classe'],
+  car: ['car', 'numero_car', 'n_car', 'num_car', 'numero_de_car', 'bus'],
   carte: ['carte', 'numero_carte', 'n_carte', 'num_carte', 'numero_de_carte'],
   recu: ['recu', 'numero_recu', 'n_recu', 'num_recu', 'numero_de_recu'],
   montant: ['montant'],
@@ -36,6 +37,7 @@ function lire(ligne) {
     nom: pick('nom'),
     prenom: pick('prenom'),
     filiere: pick('filiere') || null,
+    car: pick('car') || null,
     carte: norm(pick('carte')),
     recu: norm(pick('recu')),
     montant: montant ? parseInt(montant.replace(/\D/g, ''), 10) || null : null,
@@ -72,9 +74,18 @@ r.post('/', exiger(['ADMIN']), upload.single('fichier'), async (req, res) => {
   for (const l of valides) if (!parMatricule.has(l.matricule)) parMatricule.set(l.matricule, l);
   for (const lot of morceaux([...parMatricule.values()])) {
     await prisma.etudiant.createMany({
-      data: lot.map((l) => ({ matricule: l.matricule, nom: l.nom || '-', prenom: l.prenom || '-', filiere: l.filiere })),
+      data: lot.map((l) => ({ matricule: l.matricule, nom: l.nom || '-', prenom: l.prenom || '-', filiere: l.filiere, car: l.car })),
       skipDuplicates: true,
     });
+  }
+
+  // Numéro de car : mis à jour aussi pour les étudiants déjà présents
+  const parCar = new Map();
+  for (const l of parMatricule.values()) if (l.car) parCar.set(l.car, [...(parCar.get(l.car) || []), l.matricule]);
+  for (const [car, matricules] of parCar) {
+    for (const lot of morceaux(matricules, 5000)) {
+      await prisma.etudiant.updateMany({ where: { matricule: { in: lot } }, data: { car } });
+    }
   }
 
   const ids = new Map();
@@ -116,7 +127,7 @@ r.post('/', exiger(['ADMIN']), upload.single('fichier'), async (req, res) => {
     });
   }
 
-  res.json({ lignesLues: lignes.length, etudiants: parMatricule.size, cartes: cartes.length, recus: recus.length, ignorees, conflits });
+  res.json({ lignesLues: lignes.length, avecCar: [...parCar.values()].reduce((n, m) => n + m.length, 0), etudiants: parMatricule.size, cartes: cartes.length, recus: recus.length, ignorees, conflits });
 });
 
 export default r;

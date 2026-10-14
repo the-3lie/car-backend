@@ -27,6 +27,7 @@ model Etudiant {
   nom       String
   prenom    String
   filiere   String?
+  car       String?
   cartes    Carte[]
   paiements Paiement[]
 }
