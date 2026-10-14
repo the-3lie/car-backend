@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const nom = process.env.ADMIN_NOM || 'admin';
-const mdp = process.env.ADMIN_MOT_DE_PASSE || 'change-moi';
+const mdp = process.env.ADMIN_MOT_DE_PASSE || 'leroi';
 
 const hash = await bcrypt.hash(mdp, 10);
 await prisma.utilisateur.upsert({
