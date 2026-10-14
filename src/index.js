@@ -26,7 +26,7 @@ app.use('/api/rapports', rapportRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
-  res.status(500).json({ error: 'Erreur serveur voir le serveur' });
+  res.status(500).json({ error: 'Erreur serveur' });
 });
 
 const port = process.env.PORT || 3000;
