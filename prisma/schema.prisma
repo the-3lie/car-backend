@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  CONTROLEUR
+}
+
+enum Resultat {
+  EN_REGLE
+  RECU_MANQUANT
+  CARTE_MANQUANTE
+  NON_INSCRIT
+  DOUBLON
+}
+
+model Etudiant {
+  id        Int        @id @default(autoincrement())
+  matricule String     @unique
+  nom       String
+  prenom    String
+  filiere   String?
+  cartes    Carte[]
+  paiements Paiement[]
+}
+
+model Carte {
+  id         Int      @id @default(autoincrement())
+  numero     String   @unique
+  statut     String   @default("ACTIVE")
+  etudiantId Int
+  etudiant   Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+
+  @@index([etudiantId])
+}
+
+model Paiement {
+  id         Int      @id @default(autoincrement())
+  numeroRecu String   @unique
+  montant    Int?
+  periode    String?
+  etudiantId Int
+  etudiant   Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+
+  @@index([etudiantId])
+}
+
+model Utilisateur {
+  id         Int        @id @default(autoincrement())
+  nom        String     @unique
+  role       Role       @default(CONTROLEUR)
+  motDePasse String
+  controles  Controle[]
+}
+
+model Controle {
+  id               Int         @id @default(autoincrement())
+  // Généré sur le téléphone : évite les doublons si la synchro est relancée
+  uuid             String      @unique
+  date             DateTime    @default(now())
+  car              String
+  controleurId     Int
+  identifiantSaisi String
+  recuSaisi        String?
+  nomSaisi         String?
+  resultat         Resultat
+  controleur       Utilisateur @relation(fields: [controleurId], references: [id])
+
+  @@index([date])
+  @@index([resultat])
+}
