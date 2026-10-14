@@ -4,6 +4,28 @@ export const norm = (s) => String(s ?? '').trim().toUpperCase();
 const sansAccent = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
 
 const inclure = { cartes: true, paiements: true };
+
+// Compare le car de l'étudiant avec celui où se trouve le contrôleur ("Car 3" = "3" = "n° 3")
+const cleCar = (s) => {
+  const chiffres = String(s ?? '').match(/\d+/g);
+  return chiffres ? chiffres.join('-') : String(s ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+};
+const memeCar = (a, b) => cleCar(a) !== '' && cleCar(a) === cleCar(b);
+
+function conclure(etu, car) {
+  const aCarte = etu.cartes.length > 0;
+  const aRecu = etu.paiements.length > 0;
+  let base;
+  if (aCarte && aRecu) base = { resultat: 'EN_REGLE', message: 'Accepté' };
+  else if (aCarte) base = { resultat: 'RECU_MANQUANT', message: 'Reçu manquant, à vérifier' };
+  else if (aRecu) base = { resultat: 'CARTE_MANQUANTE', message: 'Carte manquante, à vérifier' };
+  else base = { resultat: 'RECU_MANQUANT', message: 'Ni carte ni reçu, à vérifier' };
+
+  if (etu.car && String(car ?? '').trim() && !memeCar(etu.car, car)) {
+    return { resultat: 'AUTRE_CAR', message: `Pas dans ce car : son car est le n° ${etu.car}`, etudiant: infos(etu), paiement: base.resultat };
+  }
+  return { ...base, etudiant: infos(etu), paiement: base.resultat };
+}
 const infos = (e) => ({ matricule: e.matricule, nom: e.nom, prenom: e.prenom, filiere: e.filiere, car: e.car || null });
 
 // Retrouve un étudiant à partir d'un matricule, d'un numéro de carte ou d'un numéro de reçu
@@ -32,7 +54,7 @@ async function parNom(texte) {
   });
 }
 
-export async function verifier({ identifiant, recu }) {
+export async function verifier({ identifiant, recu, car }) {
   const id = norm(identifiant);
   const r = norm(recu);
   let etu = await trouver(id);
@@ -56,10 +78,5 @@ export async function verifier({ identifiant, recu }) {
 
   if (!etu) return { resultat: 'NON_INSCRIT', message: "Il n'existe pas dans la liste", etudiant: null };
 
-  const aCarte = etu.cartes.length > 0;
-  const aRecu = etu.paiements.length > 0;
-  if (aCarte && aRecu) return { resultat: 'EN_REGLE', message: 'Accepté', etudiant: infos(etu) };
-  if (aCarte) return { resultat: 'RECU_MANQUANT', message: 'Reçu manquant, à vérifier', etudiant: infos(etu) };
-  if (aRecu) return { resultat: 'CARTE_MANQUANTE', message: 'Carte manquante, à vérifier', etudiant: infos(etu) };
-  return { resultat: 'RECU_MANQUANT', message: 'Ni carte ni reçu, à vérifier', etudiant: infos(etu) };
+  return conclure(etu, car);
 }

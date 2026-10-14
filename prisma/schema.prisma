@@ -19,6 +19,7 @@ enum Resultat {
   CARTE_MANQUANTE
   NON_INSCRIT
   DOUBLON
+  AUTRE_CAR
 }
 
 model Etudiant {

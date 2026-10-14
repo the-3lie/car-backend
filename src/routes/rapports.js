@@ -11,6 +11,7 @@ const LIBELLES = {
   CARTE_MANQUANTE: 'Carte manquante',
   NON_INSCRIT: 'Non inscrit',
   DOUBLON: 'Doublon / fraude',
+  AUTRE_CAR: 'Pas dans ce car',
 };
 
 function filtres(q) {

@@ -6,7 +6,7 @@ import { verifier } from '../verifier.js';
 
 const r = Router();
 const TOUS = ['ADMIN', 'CONTROLEUR'];
-const RESULTATS = ['EN_REGLE', 'RECU_MANQUANT', 'CARTE_MANQUANTE', 'NON_INSCRIT', 'DOUBLON'];
+const RESULTATS = ['EN_REGLE', 'RECU_MANQUANT', 'CARTE_MANQUANTE', 'NON_INSCRIT', 'DOUBLON', 'AUTRE_CAR'];
 
 // Liste complète à télécharger avant le trajet (mode hors-ligne)
 r.get('/snapshot', exiger(TOUS), async (_req, res) => {
@@ -31,7 +31,7 @@ r.get('/snapshot', exiger(TOUS), async (_req, res) => {
 r.post('/verifier', exiger(TOUS), async (req, res) => {
   const { identifiant, recu, nomSaisi, car } = req.body || {};
   if (!identifiant && !recu) return res.status(400).json({ error: 'Saisis un identifiant, une carte ou un reçu' });
-  const rep = await verifier({ identifiant, recu });
+  const rep = await verifier({ identifiant, recu, car });
   if (rep.resultat === 'PLUSIEURS') return res.json(rep);
   await prisma.controle.create({
     data: {
